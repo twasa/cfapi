@@ -5,16 +5,15 @@ import jmespath
 import cfapi
 
 
-def get_target_zone_list(json_file_path='./zone_list.json'):
+def load_target_zone_list(json_file_path='./zone_list.json'):
     with open(json_file_path, 'r') as f:
         zone_dict_data = json.load(f)
         return zone_dict_data
 
-def get_plan_id(json_file_path='./plan_id_map.json', plan='enterprise'):
+def load_plan_id(json_file_path='./plan_id_map.json', plan='enterprise'):
     with open(json_file_path, 'r') as f:
         zone_id = json.load(f)
         return zone_id[plan]
-
 
 def get_zones(parse_string: str):
     zone_list_response = cfapi.list_zones()
@@ -33,9 +32,12 @@ def get_zones_by_plan_type(plan_type='enterprise'):
     zone_data = {"zones": get_all_zones()}
     parse_string = f"zones[?plan == '{plan_type}']"
     result = jmespath.search(parse_string, zone_data)
-    return result
+    return {
+        "zone_count": len(result),
+        "zone_data": result
+    }
 
-def pprint_all_zones(zones):
+def pprint_dict_data(zones: dict):
     print(json.dumps(zones, indent=4, sort_keys=True))
 
 def bulk_edit_zone_plan(zone_list, plan_id):
@@ -47,4 +49,6 @@ def bulk_edit_zone_plan(zone_list, plan_id):
         else:
             print(f"change zone {zone} plan error: {result.text}")
 
-pprint_all_zones(get_target_zone_list())
+if __name__ == '__main__':
+    # plan types: enterprise, pro, business, free
+    pprint_dict_data(get_zones_by_plan_type('enterprise'))
